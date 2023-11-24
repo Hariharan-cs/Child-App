@@ -1,0 +1,23 @@
+### STAGE 1: Build ###
+FROM node:14.17.0-alpine as builder
+
+ARG BACKEND_URL=http://localhost:3000
+# create app directory
+RUN mkdir /app
+WORKDIR /app
+
+
+ENV PATH /app/node_modules/.bin:$PATH
+COPY package.json package-lock.json /app/
+RUN npm install
+COPY . /app/
+RUN echo '{"BACKEND_API_URL": "'$BACKEND_URL'", "TRIAL_API_URL_PREFIX": true}' > /app/src/assets/config/appsettings.production.json
+RUN npm run build --prod
+
+### STAGE 2: Production Environment ###
+FROM nginx:alpine
+COPY --from=builder /app/nginx/nginx.docker.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/dist/protecto-authentication-ui /usr/share/nginx/html
+CMD ["/bin/sh",  "-c",  "envsubst < /usr/share/nginx/html/assets/config/dynamic-env.template.js > /usr/share/nginx/html/assets/config/dynamic-env.js && exec nginx -g 'daemon off;'"]
+# ENTRYPOINT ["nginx", "-g", "daemon off;"]
+
