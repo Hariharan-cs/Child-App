@@ -7,7 +7,7 @@ import { environment } from "src/environments/environment";
 })
 export class ApiService {
 
-  apiUrl = environment.BACKEND_API_URL;
+  apiUrl = localStorage.getItem('apiurl');
 
   constructor(private http: HttpClient) {}
 
